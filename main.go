@@ -66,7 +66,7 @@ func postConfigHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Server Error", 504)
 	}
-	err = ioutil.WriteFile(filepath.Join(configPath, service, config+".json"), bytes, os.ModePerm)
+	err = ioutil.WriteFile(filepath.Join(configPath, service, config+".json"), bytes, 0644)
 	if err != nil {
 		http.Error(w, "Server Error", 504)
 	}
