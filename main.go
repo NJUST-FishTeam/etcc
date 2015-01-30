@@ -36,6 +36,7 @@ func main() {
 
 		gmux := mux.NewRouter()
 		gmux.HandleFunc("/{service}/{config}", getConfigHandler).Methods("GET")
+		gmux.HandleFunc("/{service}/{config}", postConfigHandler).Methods("POST")
 
 		http.Handle("/", gmux)
 
@@ -55,4 +56,19 @@ func getConfigHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Write(bytes)
+}
+
+func postConfigHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	service := params["service"]
+	config := params["config"]
+	bytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Server Error", 504)
+	}
+	err = ioutil.WriteFile(filepath.Join(configPath, service, config+".json"), bytes, os.ModePerm)
+	if err != nil {
+		http.Error(w, "Server Error", 504)
+	}
+	w.Write([]byte("OK"))
 }
