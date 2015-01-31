@@ -43,6 +43,7 @@ func main() {
 		gmux.HandleFunc("/{service}/{config}", getConfigHandler).Methods("GET")
 		gmux.HandleFunc("/{service}/{config}", postConfigHandler).Methods("POST")
 		gmux.HandleFunc("/", getServiceHandler).Methods("GET")
+		gmux.HandleFunc("/{service}", getConfigsHandler).Methods("GET")
 
 		http.Handle("/", gmux)
 
@@ -93,6 +94,27 @@ func getServiceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	bytes, _ := json.Marshal(Data{
 		Data: services,
+	})
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Write(bytes)
+}
+
+func getConfigsHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	serviceFile := params["service"]
+	configFile, err := os.Open(filepath.Join(configPath, serviceFile))
+	if err != nil {
+		http.Error(w, "Server Error", 504)
+	}
+	fileInfos, err := configFile.Readdir(1000)
+	configs := make([]string, 0)
+	for _, f := range fileInfos {
+		if !f.IsDir() {
+			configs = append(configs, f.Name())
+		}
+	}
+	bytes, _ := json.Marshal(Data{
+		Data: configs,
 	})
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Write(bytes)
