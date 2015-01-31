@@ -92,11 +92,10 @@ func getServiceHandler(w http.ResponseWriter, r *http.Request) {
 			services = append(services, f.Name())
 		}
 	}
-	bytes, _ := json.Marshal(Data{
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(w).Encode(Data{
 		Data: services,
 	})
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Write(bytes)
 }
 
 func getConfigsHandler(w http.ResponseWriter, r *http.Request) {
@@ -113,9 +112,8 @@ func getConfigsHandler(w http.ResponseWriter, r *http.Request) {
 			configs = append(configs, f.Name())
 		}
 	}
-	bytes, _ := json.Marshal(Data{
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(w).Encode(Data{
 		Data: configs,
 	})
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Write(bytes)
 }
