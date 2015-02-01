@@ -44,6 +44,7 @@ func main() {
 		gmux.HandleFunc("/{service}/{config}", postConfigHandler).Methods("POST")
 		gmux.HandleFunc("/", getServiceHandler).Methods("GET")
 		gmux.HandleFunc("/{service}", getConfigsHandler).Methods("GET")
+		gmux.HandleFunc("/{service}", addServiceHandler).Methods("POST")
 
 		http.Handle("/", gmux)
 
@@ -116,4 +117,14 @@ func getConfigsHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(Data{
 		Data: configs,
 	})
+}
+
+func addServiceHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	service := params["service"]
+	servicePath := filepath.Join(configPath, service)
+	if _, err := os.Stat(servicePath); err != nil && !os.IsExist(err) {
+		os.MkdirAll(servicePath, os.ModePerm)
+	}
+	w.Write([]byte("OK"))
 }
