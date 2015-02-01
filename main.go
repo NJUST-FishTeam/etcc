@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/codegangsta/cli"
 	"github.com/gorilla/mux"
 	"io/ioutil"
@@ -13,6 +14,10 @@ var (
 	version    = "0.0.1"
 	configPath = "./config/"
 )
+
+type Data struct {
+	Data interface{} `json:"data"`
+}
 
 func main() {
 	app := cli.NewApp()
@@ -37,6 +42,9 @@ func main() {
 		gmux := mux.NewRouter()
 		gmux.HandleFunc("/{service}/{config}", getConfigHandler).Methods("GET")
 		gmux.HandleFunc("/{service}/{config}", postConfigHandler).Methods("POST")
+		gmux.HandleFunc("/", getServiceHandler).Methods("GET")
+		gmux.HandleFunc("/{service}", getConfigsHandler).Methods("GET")
+		gmux.HandleFunc("/{service}", addServiceHandler).Methods("POST")
 
 		http.Handle("/", gmux)
 
@@ -66,9 +74,57 @@ func postConfigHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Server Error", 504)
 	}
-	err = ioutil.WriteFile(filepath.Join(configPath, service, config+".json"), bytes, os.ModePerm)
+	err = ioutil.WriteFile(filepath.Join(configPath, service, config+".json"), bytes, 0644)
 	if err != nil {
 		http.Error(w, "Server Error", 504)
+	}
+	w.Write([]byte("OK"))
+}
+
+func getServiceHandler(w http.ResponseWriter, r *http.Request) {
+	configFile, err := os.Open(configPath)
+	if err != nil {
+		http.Error(w, "Server Error", 504)
+	}
+	fileInfos, err := configFile.Readdir(1000)
+	services := make([]string, 0)
+	for _, f := range fileInfos {
+		if f.IsDir() {
+			services = append(services, f.Name())
+		}
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(w).Encode(Data{
+		Data: services,
+	})
+}
+
+func getConfigsHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	serviceFile := params["service"]
+	configFile, err := os.Open(filepath.Join(configPath, serviceFile))
+	if err != nil {
+		http.Error(w, "Server Error", 504)
+	}
+	fileInfos, err := configFile.Readdir(1000)
+	configs := make([]string, 0)
+	for _, f := range fileInfos {
+		if !f.IsDir() {
+			configs = append(configs, f.Name())
+		}
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(w).Encode(Data{
+		Data: configs,
+	})
+}
+
+func addServiceHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	service := params["service"]
+	servicePath := filepath.Join(configPath, service)
+	if _, err := os.Stat(servicePath); err != nil && !os.IsExist(err) {
+		os.MkdirAll(servicePath, os.ModePerm)
 	}
 	w.Write([]byte("OK"))
 }
