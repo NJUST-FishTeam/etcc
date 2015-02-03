@@ -1,13 +1,12 @@
 package main
 
 import (
-	"encoding/json"
-	"github.com/codegangsta/cli"
-	"github.com/gorilla/mux"
-	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
-	"path/filepath"
+	"runtime"
+
+	"github.com/codegangsta/cli"
 )
 
 var (
@@ -17,6 +16,18 @@ var (
 
 type Data struct {
 	Data interface{} `json:"data"`
+}
+
+type Config struct {
+	Name    string `json:"name"`
+	Service string `json:"service"`
+	Data    string `json:"data"`
+}
+
+type Configs []Config
+
+func init() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func main() {
@@ -39,92 +50,9 @@ func main() {
 		}
 		configPath = c.String("path")
 
-		gmux := mux.NewRouter()
-		gmux.HandleFunc("/{service}/{config}", getConfigHandler).Methods("GET")
-		gmux.HandleFunc("/{service}/{config}", postConfigHandler).Methods("POST")
-		gmux.HandleFunc("/", getServiceHandler).Methods("GET")
-		gmux.HandleFunc("/{service}", getConfigsHandler).Methods("GET")
-		gmux.HandleFunc("/{service}", addServiceHandler).Methods("POST")
-
-		http.Handle("/", gmux)
-
-		http.ListenAndServe(":8009", nil)
+		router := NewRouter()
+		log.Fatal(http.ListenAndServe(":8009", router))
 	}
 
 	app.Run(os.Args)
-}
-
-func getConfigHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	service := params["service"]
-	config := params["config"]
-	bytes, err := ioutil.ReadFile(filepath.Join(configPath, service, config+".json"))
-	if err != nil {
-		http.NotFound(w, r)
-	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Write(bytes)
-}
-
-func postConfigHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	service := params["service"]
-	config := params["config"]
-	bytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Server Error", 504)
-	}
-	err = ioutil.WriteFile(filepath.Join(configPath, service, config+".json"), bytes, 0644)
-	if err != nil {
-		http.Error(w, "Server Error", 504)
-	}
-	w.Write([]byte("OK"))
-}
-
-func getServiceHandler(w http.ResponseWriter, r *http.Request) {
-	configFile, err := os.Open(configPath)
-	if err != nil {
-		http.Error(w, "Server Error", 504)
-	}
-	fileInfos, err := configFile.Readdir(1000)
-	services := make([]string, 0)
-	for _, f := range fileInfos {
-		if f.IsDir() {
-			services = append(services, f.Name())
-		}
-	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	json.NewEncoder(w).Encode(Data{
-		Data: services,
-	})
-}
-
-func getConfigsHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	serviceFile := params["service"]
-	configFile, err := os.Open(filepath.Join(configPath, serviceFile))
-	if err != nil {
-		http.Error(w, "Server Error", 504)
-	}
-	fileInfos, err := configFile.Readdir(1000)
-	configs := make([]string, 0)
-	for _, f := range fileInfos {
-		if !f.IsDir() {
-			configs = append(configs, f.Name())
-		}
-	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	json.NewEncoder(w).Encode(Data{
-		Data: configs,
-	})
-}
-
-func addServiceHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	service := params["service"]
-	servicePath := filepath.Join(configPath, service)
-	if _, err := os.Stat(servicePath); err != nil && !os.IsExist(err) {
-		os.MkdirAll(servicePath, os.ModePerm)
-	}
-	w.Write([]byte("OK"))
 }
