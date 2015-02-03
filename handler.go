@@ -86,8 +86,8 @@ func GetConfigsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewServiceHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	service := params["service"]
+	r.ParseForm()
+	service := r.FormValue("service")
 	servicePath := filepath.Join(configPath, service)
 	if _, err := os.Stat(servicePath); err != nil && !os.IsExist(err) {
 		os.MkdirAll(servicePath, os.ModePerm)
