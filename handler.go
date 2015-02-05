@@ -34,11 +34,11 @@ func PostConfigHandler(w http.ResponseWriter, r *http.Request) {
 	config := params["config"]
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Server Error", 504)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	err = ioutil.WriteFile(filepath.Join(configPath, service, config+".json"), bytes, 0644)
 	if err != nil {
-		http.Error(w, "Server Error", 504)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	w.Write([]byte("OK"))
 }
@@ -46,7 +46,7 @@ func PostConfigHandler(w http.ResponseWriter, r *http.Request) {
 func GetServicesHandler(w http.ResponseWriter, r *http.Request) {
 	configFile, err := os.Open(configPath)
 	if err != nil {
-		http.Error(w, "Server Error", 504)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	fileInfos, err := configFile.Readdir(1000)
 	services := make([]string, 0)
@@ -66,7 +66,7 @@ func GetConfigsHandler(w http.ResponseWriter, r *http.Request) {
 	serviceFile := params["service"]
 	configFile, err := os.Open(filepath.Join(configPath, serviceFile))
 	if err != nil {
-		http.Error(w, "Server Error", 504)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	fileInfos, err := configFile.Readdir(1000)
 	configs := make(Configs, 0)
