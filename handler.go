@@ -30,23 +30,24 @@ func GetConfigHandler(w http.ResponseWriter, r *http.Request) {
 
 func PostConfigHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	service := params["service"]
-	config := params["config"]
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Server Error", 504)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	err = ioutil.WriteFile(filepath.Join(configPath, service, config+".json"), bytes, 0644)
+	err = ioutil.WriteFile(filepath.Join(configPath, params["service"], params["config"]+".json"), bytes, 0644)
 	if err != nil {
-		http.Error(w, "Server Error", 504)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.Write([]byte("OK"))
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(w).Encode(Data{
+		Status: "OK",
+	})
 }
 
 func GetServicesHandler(w http.ResponseWriter, r *http.Request) {
 	configFile, err := os.Open(configPath)
 	if err != nil {
-		http.Error(w, "Server Error", 504)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	fileInfos, err := configFile.Readdir(1000)
 	services := make([]string, 0)
@@ -57,6 +58,7 @@ func GetServicesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(Data{
+		Status: "OK",
 		Data: services,
 	})
 }
@@ -66,7 +68,7 @@ func GetConfigsHandler(w http.ResponseWriter, r *http.Request) {
 	serviceFile := params["service"]
 	configFile, err := os.Open(filepath.Join(configPath, serviceFile))
 	if err != nil {
-		http.Error(w, "Server Error", 504)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	fileInfos, err := configFile.Readdir(1000)
 	configs := make(Configs, 0)
@@ -86,11 +88,14 @@ func GetConfigsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewServiceHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	service := params["service"]
+	r.ParseForm()
+	service := r.FormValue("service")
 	servicePath := filepath.Join(configPath, service)
 	if _, err := os.Stat(servicePath); err != nil && !os.IsExist(err) {
 		os.MkdirAll(servicePath, os.ModePerm)
 	}
-	w.Write([]byte("OK"))
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(w).Encode(Data{
+		Status: "OK",
+	})
 }
