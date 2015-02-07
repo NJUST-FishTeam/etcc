@@ -30,17 +30,18 @@ func GetConfigHandler(w http.ResponseWriter, r *http.Request) {
 
 func PostConfigHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	service := params["service"]
-	config := params["config"]
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	err = ioutil.WriteFile(filepath.Join(configPath, service, config+".json"), bytes, 0644)
+	err = ioutil.WriteFile(filepath.Join(configPath, params["service"], params["config"]+".json"), bytes, 0644)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.Write([]byte("OK"))
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(w).Encode(Data{
+		Status: "OK",
+	})
 }
 
 func GetServicesHandler(w http.ResponseWriter, r *http.Request) {
@@ -57,6 +58,7 @@ func GetServicesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(Data{
+		Status: "OK",
 		Data: services,
 	})
 }
@@ -92,5 +94,8 @@ func NewServiceHandler(w http.ResponseWriter, r *http.Request) {
 	if _, err := os.Stat(servicePath); err != nil && !os.IsExist(err) {
 		os.MkdirAll(servicePath, os.ModePerm)
 	}
-	w.Write([]byte("OK"))
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(w).Encode(Data{
+		Status: "OK",
+	})
 }
