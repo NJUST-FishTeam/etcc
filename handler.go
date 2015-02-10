@@ -50,7 +50,7 @@ func GetServicesHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	fileInfos, err := configFile.Readdir(1000)
-	services := make([]string, 0)
+	var services []string
 	for _, f := range fileInfos {
 		if f.IsDir() {
 			services = append(services, f.Name())
