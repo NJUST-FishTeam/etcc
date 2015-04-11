@@ -11,6 +11,7 @@ from . import service
 
 api = application = falcon.API()
 
-api.add_route('/', service.Collection())
-api.add_route('/{service}', service.Item())
-api.add_route('/{service}/{configure}', configure.Item())
+api.add_route('/services', service.Collection())
+api.add_route('/services/{service}', service.Item())
+api.add_route('/services/{service}/configures', configure.Collection())
+api.add_route('/services/{service}/configures/{configure}', configure.Item())
