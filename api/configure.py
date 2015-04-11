@@ -22,3 +22,13 @@ class Item(object):
             'status': "success",
             'data': json.loads(content),
         })
+
+    def on_post(self, req, resp, service, configure):
+        try:
+            conf = open(os.path.join(config.STORE_PATH, service, configure + ".json"), 'w')
+        except IOError:
+            raise falcon.HTTPNotFound
+        conf.write(req.stream.read())
+        resp.body = json.dumps({
+            'status': "success",
+        })
