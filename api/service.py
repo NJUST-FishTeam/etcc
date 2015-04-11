@@ -31,10 +31,9 @@ class Item(object):
         if not os.path.exists(service_path):
             raise falcon.HTTPNotFound
         files = os.listdir(service_path)
-        print files
         configs = [f.split('.')[0] for f in files
                    if os.path.isfile(os.path.join(service_path, f))]
         resp.body = json.dumps({
-            'status': 'status',
+            'status': 'success',
             'data': configs
         })
