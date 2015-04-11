@@ -2,5 +2,4 @@
 # -*- coding: utf-8 -*-
 
 
-
-STORE_PATH = '/vagrant/etcc/config'
+STORE_PATH = ''
