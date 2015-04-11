@@ -4,7 +4,6 @@
 
 import json
 import os
-import shutil
 
 
 import falcon
@@ -23,10 +22,13 @@ class Collection(object):
         configs = [f.split('.')[0] for f in files
                    if os.path.isfile(os.path.join(service_path, f))]
 
-        data = {}
+        data = []
         for conf in configs:
             conf_path = os.path.join(service_path, conf + '.json')
-            data[conf] = json.loads(open(conf_path).read())
+            data.append({
+                'name': conf,
+                'data': json.loads(open(conf_path).read())
+            })
 
         resp.body = json.dumps({
             'status': 'success',
