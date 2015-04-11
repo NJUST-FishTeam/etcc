@@ -66,12 +66,42 @@ class Item(object):
         files = os.listdir(service_path)
         configs = [f.split('.')[0] for f in files
                    if os.path.isfile(os.path.join(service_path, f))]
-        data = {}
-        for conf in configs:
-            content = open(os.path.join(service_path, conf + '.json')).read()
-            data[conf] = json.loads(content)
 
         resp.body = json.dumps({
             'status': 'success',
-            'data': data
+            'data': configs,
+            'count': len(configs)
+        })
+
+    def on_put(self, req, resp, service):
+        body = json.loads(req.stream.read())
+        if body['action'] != 'rename_service':
+            resp.status = falcon.HTTP_400
+            resp.body = json.dumps({
+                'status': "failed",
+                'reason': "action is not allowed"
+            })
+            return
+
+        new_service_path = os.path.join(config.STORE_PATH, body['new_name'])
+        if os.path.exists(new_service_path):
+            resp.status = falcon.HTTP_400
+            resp.body = json.dumps({
+                'status': 'failed',
+                'reason': 'new name service exists'
+            })
+            return
+        old_service_path = os.path.join(config.STORE_PATH, service)
+        os.rename(old_service_path, new_service_path)
+        resp.body = json.dumps({
+            'status': 'success',
+        })
+
+    def on_delete(self, req, resp, service):
+        service_path = os.path.join(config.STORE_PATH, service)
+        if not os.path.exists(service_path):
+            raise falcon.HTTPNotFound
+        shutil.rmtree(service_path)
+        resp.body = json.dumps({
+            'status': 'success',
         })
