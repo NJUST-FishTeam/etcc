@@ -33,7 +33,12 @@ class Item(object):
         files = os.listdir(service_path)
         configs = [f.split('.')[0] for f in files
                    if os.path.isfile(os.path.join(service_path, f))]
+        data = {}
+        for conf in configs:
+            content = open(os.path.join(service_path, conf + '.json')).read()
+            data[conf] = json.loads(content)
+
         resp.body = json.dumps({
             'status': 'success',
-            'data': configs
+            'data': data
         })

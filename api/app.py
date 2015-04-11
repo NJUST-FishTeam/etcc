@@ -8,6 +8,7 @@ import falcon
 from . import configure
 from . import service
 
+
 api = application = falcon.API()
 
 api.add_route('/', service.Collection())
