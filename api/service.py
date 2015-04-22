@@ -10,7 +10,7 @@ import shutil
 import falcon
 
 
-from . import config
+from api import config
 
 
 class Collection(object):

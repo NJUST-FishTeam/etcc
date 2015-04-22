@@ -5,8 +5,8 @@
 import falcon
 
 
-from . import configure
-from . import service
+from api import configure
+from api import service
 
 
 api = application = falcon.API()
