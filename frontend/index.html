@@ -7,39 +7,104 @@
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
     <link rel="stylesheet" href="/static/css/font-awesome.min.css">
     <link rel="stylesheet" href="/static/css/main.css">
+    <link href="/static/jsoneditor/jsoneditor.css" rel="stylesheet" type="text/css">
     <script src="static/js/jquery-1.11.0.js"></script>
     <script src="/static/js/bootstrap.js"></script>
     <script src="/static/js/angular.js"></script>
     <script src="/static/js/angular-route.js"></script>
+    <script src="/static/jsoneditor/jsoneditor.js"></script>
     <style>
-        #head-wrap{
+        #head-wrap {
             width: 100%;
             height: 300px;
             padding-top: 50px;
-            background-image:  linear-gradient(30deg, rgb(2, 0, 49) 0px, rgb(109, 51, 83) 100%);
+            background-image: linear-gradient(30deg, rgb(2, 0, 49) 0px, rgb(109, 51, 83) 100%);
             text-align: center;
         }
-        .title{
+
+        .title {
             color: #ffffff;
-            font-family: "Helvetica Neue","microsoft yahei",Helvetica,Arial,"Hiragino Sans GB","Hiragino Sans GB W3","WenQuanYi Micro Hei",sans-serif;
+            font-family: "Helvetica Neue", "microsoft yahei", Helvetica, Arial, "Hiragino Sans GB", "Hiragino Sans GB W3", "WenQuanYi Micro Hei", sans-serif;
             font-size: 50px;
         }
-        .app-name{
+
+        .app-name {
             color: #ffffff;
-            font-family: "Helvetica Neue","microsoft yahei",Helvetica,Arial,"Hiragino Sans GB","Hiragino Sans GB W3","WenQuanYi Micro Hei",sans-serif;
+            font-family: "Helvetica Neue", "microsoft yahei", Helvetica, Arial, "Hiragino Sans GB", "Hiragino Sans GB W3", "WenQuanYi Micro Hei", sans-serif;
             font-size: 75px;
         }
     </style>
 </head>
 <body>
-<div id="head-wrap">
-    <p class="app-name">ETCC</p>
-    <p class="title">欢迎来到Fishteam配置中心</p>
+<!--<div id="head-wrap">-->
+<!--<p class="app-name">ETCC</p>-->
+
+<!--<p class="title">欢迎来到Fishteam配置中心</p>-->
+<!--</div>-->
+<!--<div class="project-wrap">-->
+<!--<ul>-->
+<!--<li></li>-->
+<!--</ul>-->
+<!--</div>-->
+<div class="container" ng-app="etcc">
+    <div id="projects">
+        <ul ng-controller="servicesController">
+            <li ng-repeat="service in services" ng-controller="serviceController">
+                <label>{{service}}</label>
+                <ul>
+                    <li ng-repeat="configure in configures">
+                        <a href="" ng-click="click_configure(configure)">{{configure}}</a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="json-editor" ng-controller="jsonEditor">
+        <div id="jsoneditor"></div>
+    </div>
 </div>
-<div class="project-wrap">
-    <ul>
-        <li></li>
-    </ul>
-</div>
+<script>
+    'use strict';
+    var json_editor = new JSONEditor(document.getElementById('jsoneditor'), {
+        mode: 'tree'
+    }, null);
+    var etcc = angular.module('etcc', [
+        'ngRoute',
+    ]);
+
+    etcc.controller('servicesController', ['$scope', '$http', '$rootScope',
+        function ($scope, $http, globel_settings, $rootScope, $popbox) {
+            $scope.services = []
+            $http.get("/services/").success(function (data, status, headers, config) {
+                $scope.services = data.data;
+            });
+
+
+        }]);
+    etcc.controller('serviceController', ['$scope', '$http', '$rootScope',
+        function ($scope, $http, $rootScope) {
+            $scope.configures = []
+            $http.get('/services/' + $scope.service + '/').success(function (data, status, headers, config) {
+                $scope.configures = data.data;
+            });
+            $scope.click_configure = function (configure) {
+                $rootScope.$broadcast("switchConfigure", $scope.service, configure);
+            }
+
+        }]);
+    etcc.controller('jsonEditor', ['$scope', '$http', '$rootScope',
+        function ($scope, $http, $rootScope) {
+            $scope.json = {};
+            $rootScope.$on("switchConfigure", function ($event, service, configure) {
+                $scope.service = service;
+                $scope.configure = configure;
+
+                var url = '/services/' + $scope.service + '/configures/' + $scope.configure + '/';
+                $http.get(url).success(function (data, status) {
+                    json_editor.set(data.data);
+                });
+            });
+        }]);
+</script>
 </body>
 </html>

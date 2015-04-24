@@ -3,7 +3,7 @@
 # @Author: Comzyh
 # @Date:   2015-04-24 01:29:56
 # @Last Modified by:   Comzyh
-# @Last Modified time: 2015-04-24 03:00:09
+# @Last Modified time: 2015-04-24 03:09:16
 
 import falcon
 import os
@@ -28,6 +28,7 @@ class StaticFiles(object):
             resp.stream_len = os.path.getsize(filepath)
             resp.content_type, encoding = mimetypes.guess_type(req.url)
             resp.append_header('req.url',mimetypes.guess_type(req.url))
+            resp.cache_control=['max-age=30']
         else:
             resp.status = falcon.HTTP_404
 
@@ -42,6 +43,5 @@ class DefaultPage(object):
             resp.stream = open(self.filepath, 'rb')
             resp.stream_len = os.path.getsize(self.filepath)
             resp.content_type = 'text/html'
-            print self.filepath
         else:
             resp.status = falcon.HTTP_404
