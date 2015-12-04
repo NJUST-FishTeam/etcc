@@ -51,38 +51,58 @@
 
 <div class="container">
     <div id="services">
-        <!-- <service v-for="service in services" :service-name="service"></service> -->
         <ul>
-            <li is="service" v-for="service in services" :service-name="service"></li>
+            <li @refresh="fetch" is="service" v-for="service in services" :service-name="service"></li>
         </ul>
+        <div>
+            <input type="text" v-model="newServiceName">
+            <button @click="addService" type="button" name="button">创建Service</button>
+        </div>
     </div>
+    <hr>
     <div class="json-editor">
-        <div id="jsoneditor"></div>
+        <div style="height: 250px" id="jsoneditor"></div>
     </div>
 </div>
 <template id="config">
     <li>
-        <a href="#" @click="f">{{configName}}</a>
+        <a href="#" @click="setJson">{{configName}}</a>
+        <a href="#" @click="delConfig"><span>[X]</span></a>
     </li>
 </template>
 <template id="service">
     <li>
         <label for="">{{serviceName}}</label>
+        <a @click="delService" href="#"><span>X</span></a>
         <ul>
-            <li v-for="config in configs" is="config" :config-name="config.name" :config-json="config.data"></li>
+            <li @refresh="fetch" v-for="config in configs" is="config" :service-name="serviceName" :config-name="config.name" :config-json="config.data"></li>
         </ul>
+        <input type="text" name="name" v-model="newConfigName">
+        <button @click="newConfig" type="button" name="button">新建配置</button>
     </li>
 </template>
 <script>
-    var json_editor = new JSONEditor(document.getElementById('jsoneditor'));
+    var json_editor = new JSONEditor(document.getElementById('jsoneditor'),{
+        modes: ['tree', 'code', 'text']
+    });
     var comConfig = Vue.extend({
         props: [
             'configJson',
-            'configName'
+            'configName',
+            'serviceName'
         ],
+        http: {
+            root: '/services'
+        },
         methods: {
-            'f': function(){
+            'setJson': function(){
                 json_editor.set(this.configJson);
+            },
+            'delConfig': function(){
+                this.$http.delete(this.serviceName + '/configures/' + this.configName
+            ,function(data, status, request){
+                this.$dispatch('refresh');
+            })
             }
         },
         template: '#config'
@@ -98,30 +118,42 @@
         components: {
             'config': comConfig
         },
+        methods: {
+            'delService': function(){
+                this.$http.delete(this.serviceName);
+                this.$dispatch('refresh');
+            },
+            'fetch': function(){
+                this.$http.get(this.serviceName + '/configures', function (data, status, request) {
+                if(data['status'] == 'success'){
+                    this.configs = data['data'];
+                }
+                else {
+                    console.log('请求configs错误');
+                }
+                }).error(function (data, status, request) {
+                    console.log('请求错误');
+                })
+            },
+            'newConfig': function(){
+                this.$http.post(this.serviceName+'/configures', {
+                    "action": "create_configure",
+                    "configure_name": this.newConfigName,
+                    "configure": {"a":1, "b":11}
+                }, function(data, status, request){
+                    //
+                });
+                this.fetch();
+                this.newConfigName = "";
+            }
+        },
         ready: function(){
-            this.$http.get(this.serviceName + '/configures', function (data, status, request) {
-            if(data['status'] == 'success'){
-                this.configs = data['data'];
-            }
-            else {
-                console.log('请求configs错误');
-            }
-            }).error(function (data, status, request) {
-                console.log('请求错误');
-            })
+            this.fetch();
         },
         data: function(){
             return {
-                'configs': [
-                    {
-                        'name': 'prod',
-                        'data': '[1, 2, 3]'
-                    },
-                    {
-                        'name': 'prodsds',
-                        'data': '[5, 7, 8]'
-                    }
-                ]
+                'configs': [],
+                'newConfigName': ''
             };
         }
     });
@@ -133,20 +165,32 @@
         components: {
             'service': comService
         },
+        methods: {
+            'fetch': function(){
+                this.$http.get('', function (data, status, request) {
+                if(data['status'] == 'success'){
+                    this.services = data['data'];
+                }
+                else {
+                    console.log('请求services错误');
+                }
+                }).error(function (data, status, request) {
+                    console.log('请求错误');
+                })
+            },
+            'addService': function(){
+                this.$http.post('', {"action": "create_service",
+                "service": this.newServiceName});
+                this.newServiceName = '';
+                this.fetch();
+            }
+        },
         ready: function(){
-            this.$http.get('', function (data, status, request) {
-            if(data['status'] == 'success'){
-                this.services = data['data'];
-            }
-            else {
-                console.log('请求services错误');
-            }
-            }).error(function (data, status, request) {
-                console.log('请求错误');
-            })
+            this.fetch();
         },
         data: {
-            'services': ''
+            'services': [],
+            'newServiceName': ''
         }
     });
 </script>
