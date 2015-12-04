@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=Edge">
     <title>Fishteam 配置中心</title>
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link href="//cdn.bootcss.com/semantic-ui/2.1.6/semantic.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/font-awesome.min.css">
     <link rel="stylesheet" href="/static/css/main.css">
     <link href="/static/jsoneditor/jsoneditor.css" rel="stylesheet" type="text/css">
@@ -35,32 +36,44 @@
             font-family: "Helvetica Neue", "microsoft yahei", Helvetica, Arial, "Hiragino Sans GB", "Hiragino Sans GB W3", "WenQuanYi Micro Hei", sans-serif;
             font-size: 75px;
         }
+.expand-transition {
+  transition: all .5s ease;
+  height: 20px;
+}
+
+.expand-enter, .expand-leave {
+  height: 0;
+  padding: 0 10px;
+  opacity: 0;
+}
     </style>
 </head>
 <body>
-<div id="head-wrap">
-<p class="app-name">ETCC</p>
-
-<p class="title">欢迎来到Fishteam配置中心</p>
-</div>
-<div class="project-wrap">
-</div>
+<!-- <div id="head-wrap"> -->
+<!-- <p class="app-name">ETCC</p> -->
+<!-- <p class="title">欢迎来到Fishteam配置中心</p> -->
+<!-- </div> -->
 
 <div class="container" style="padding-bottom: 30px">
     <div id="services">
         <ul>
             <li @refresh="fetch" is="service" v-for="service in services" :service-name="service"></li>
         </ul>
-        <div>
-            <input type="text" v-model="newServiceName">
-            <button @click="addService" type="button" name="button">创建Service</button>
+        <!-- <div> -->
+            <!-- <input type="text" v-model="newServiceName"> -->
+            <!-- <button @click="addService" type="button" name="button">创建Service</button> -->
+        <!-- </div> -->
+        <div style="padding-left:20px;" class="ui mini icon input">
+            <input v-model="newServiceName" type="text" placeholder="New Service Name...">
+            <i  @click="addService"  class="plus link icon"></i>
         </div>
         <hr>
         <div class="json-editor">
             <p>
                 当前编辑: {{currentService}} \ {{currentConfig}}
             </p>
-            <button @click="updConfig" type="button" name="button">修改</button>
+            <button class="ui primary button" @click="updConfig" type="button" name="button">修改</button>
+            <br><br>
             <div style="height: 250px" id="jsoneditor"></div>
         </div>
     </div>
@@ -73,15 +86,21 @@
     </li>
 </template>
 <template id="service">
-    <li>
+    <div>
+        <i class="angle link icon" @click="expand=!expand" v-bind:class="menuClass"></i>
         <label for="">{{serviceName}}</label>
         <a @click="delService" href="###"><span>[X]</span></a>
         <ul>
-            <li @refresh="fetch" v-for="config in configs" is="config" :service-name="serviceName" :config-name="config.name" :config-json="config.data"></li>
+            <li v-show="expand" transition="expand" @refresh="fetch" v-for="config in configs" is="config" :service-name="serviceName" :config-name="config.name" :config-json="config.data"></li>
+
         </ul>
-        <input type="text" name="name" v-model="newConfigName">
-        <button @click="newConfig" type="button" name="button">新建配置</button>
-    </li>
+        <!-- <input class="form-control form-inline" v-show="expand" type="text" name="name" v-model="newConfigName"> -->
+        <!-- <button v-show="expand" @click="newConfig" type="button" name="button">新建配置</button> -->
+        <div style="padding-left:20px" class="ui mini icon input">
+            <input v-show="expand" v-model="newConfigName" type="text" placeholder="New Config Name...">
+            <i v-show="expand" @click="newConfig" class="plus link icon"></i>
+        </div>
+    </div>
 </template>
 <script>
     var json_editor = new JSONEditor(document.getElementById('jsoneditor'),{
@@ -166,9 +185,15 @@
         data: function(){
             return {
                 'configs': [],
-                'newConfigName': ''
+                'newConfigName': '',
+                'expand': false
             };
-        }
+        },
+        computed: {
+            'menuClass': function(){
+                return this.expand ? 'down' : 'right';
+            }
+        },
     });
     var vmServices = new Vue({
         http: {
