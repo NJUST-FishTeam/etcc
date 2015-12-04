@@ -38,18 +38,15 @@
     </style>
 </head>
 <body>
-<!-- <div id="head-wrap">-->
-<!-- <p class="app-name">ETCC</p>-->
+<div id="head-wrap">
+<p class="app-name">ETCC</p>
 
-<!-- <p class="title">欢迎来到Fishteam配置中心</p> -->
-<!-- </div> -->
-<!-- <div class="project-wrap"> -->
-<!-- <ul> -->
-<!-- <li></li> -->
-<!-- </ul> -->
-<!-- </div> -->
+<p class="title">欢迎来到Fishteam配置中心</p>
+</div>
+<div class="project-wrap">
+</div>
 
-<div class="container">
+<div class="container" style="padding-bottom: 30px">
     <div id="services">
         <ul>
             <li @refresh="fetch" is="service" v-for="service in services" :service-name="service"></li>
@@ -58,22 +55,27 @@
             <input type="text" v-model="newServiceName">
             <button @click="addService" type="button" name="button">创建Service</button>
         </div>
+        <hr>
+        <div class="json-editor">
+            <p>
+                当前编辑: {{currentService}} \ {{currentConfig}}
+            </p>
+            <button @click="updConfig" type="button" name="button">修改</button>
+            <div style="height: 250px" id="jsoneditor"></div>
+        </div>
     </div>
-    <hr>
-    <div class="json-editor">
-        <div style="height: 250px" id="jsoneditor"></div>
-    </div>
+
 </div>
 <template id="config">
     <li>
-        <a href="#" @click="setJson">{{configName}}</a>
-        <a href="#" @click="delConfig"><span>[X]</span></a>
+        <a href="###" @click="click">{{configName}}</a>
+        <a href="###" @click="delConfig"><span>[X]</span></a>
     </li>
 </template>
 <template id="service">
     <li>
         <label for="">{{serviceName}}</label>
-        <a @click="delService" href="#"><span>X</span></a>
+        <a @click="delService" href="###"><span>[X]</span></a>
         <ul>
             <li @refresh="fetch" v-for="config in configs" is="config" :service-name="serviceName" :config-name="config.name" :config-json="config.data"></li>
         </ul>
@@ -95,14 +97,25 @@
             root: '/services'
         },
         methods: {
-            'setJson': function(){
-                json_editor.set(this.configJson);
+            'click': function(){
+                console.log(this.configJson);
+                this.fetch();
+                this.$dispatch('updateCurrent', this.serviceName, this.configName);
             },
             'delConfig': function(){
                 this.$http.delete(this.serviceName + '/configures/' + this.configName
-            ,function(data, status, request){
+                ,function(data, status, request){
                 this.$dispatch('refresh');
-            })
+                })
+            },
+            'fetch': function(){
+                this.$http.get(this.serviceName+'/configures/'+this.configName
+                ,function(data, status, request){
+                    if(data.status == 'success'){
+                        this.configJson = data['data'];
+                        json_editor.set(this.configJson);
+                    }
+                });
             }
         },
         template: '#config'
@@ -139,7 +152,7 @@
                 this.$http.post(this.serviceName+'/configures', {
                     "action": "create_configure",
                     "configure_name": this.newConfigName,
-                    "configure": {"a":1, "b":11}
+                    "configure": {}
                 }, function(data, status, request){
                     //
                 });
@@ -183,6 +196,19 @@
                 "service": this.newServiceName});
                 this.newServiceName = '';
                 this.fetch();
+            },
+            'updConfig': function(){
+                console.log(json_editor.get());
+                this.$http.put(this.currentService+'/configures/'+this.currentConfig
+            , json_editor.get(), function(data, status, requests){
+                //
+            });
+            }
+        },
+        events: {
+            'updateCurrent': function(service, config){
+                this.currentService = service;
+                this.currentConfig = config;
             }
         },
         ready: function(){
@@ -190,7 +216,9 @@
         },
         data: {
             'services': [],
-            'newServiceName': ''
+            'newServiceName': '',
+            'currentService': '',
+            'currentConfig': ''
         }
     });
 </script>
