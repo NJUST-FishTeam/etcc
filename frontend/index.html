@@ -14,7 +14,7 @@
     <script src="/static/js/angular-route.js"></script>
     <script src="/static/jsoneditor/jsoneditor.js"></script>
     <script src="/static/js/vue.js"></script>
-    <script src="/static/js/vue-resource.min.js"></script>
+    <script src="/static/js/vue-resource.js"></script>
     <style>
         #head-wrap {
             width: 100%;
@@ -62,61 +62,91 @@
 </div>
 <template id="config">
     <li>
-        <a href="#">{{configName}} .. {{configJson}}</a>
+        <a href="#" @click="f">{{configName}}</a>
     </li>
 </template>
 <template id="service">
     <li>
         <label for="">{{serviceName}}</label>
         <ul>
-            <li v-for="config in configs" is="config" :config-name="config.name" :config-json="config.json"></li>
+            <li v-for="config in configs" is="config" :config-name="config.name" :config-json="config.data"></li>
         </ul>
     </li>
 </template>
 <script>
-    var json_editor = new JSONEditor(document.getElementById('jsoneditor'), {
-        mode: 'tree'
-    }, null);
+    var json_editor = new JSONEditor(document.getElementById('jsoneditor'));
     var comConfig = Vue.extend({
         props: [
             'configJson',
             'configName'
         ],
+        methods: {
+            'f': function(){
+                json_editor.set(this.configJson);
+            }
+        },
         template: '#config'
     });
     var comService = Vue.extend({
         props: [
             'serviceName'
         ],
+        http: {
+            root: '/services'
+        },
         template: '#service',
         components: {
             'config': comConfig
+        },
+        ready: function(){
+            this.$http.get(this.serviceName + '/configures', function (data, status, request) {
+            if(data['status'] == 'success'){
+                this.configs = data['data'];
+            }
+            else {
+                console.log('请求configs错误');
+            }
+            }).error(function (data, status, request) {
+                console.log('请求错误');
+            })
         },
         data: function(){
             return {
                 'configs': [
                     {
                         'name': 'prod',
-                        'json': '[1, 2, 3]'
+                        'data': '[1, 2, 3]'
                     },
                     {
                         'name': 'prodsds',
-                        'json': '[5, 7, 8]'
+                        'data': '[5, 7, 8]'
                     }
                 ]
             };
         }
     });
     var vmServices = new Vue({
+        http: {
+            root: '/services',
+        },
         el: '#services',
         components: {
             'service': comService
         },
+        ready: function(){
+            this.$http.get('', function (data, status, request) {
+            if(data['status'] == 'success'){
+                this.services = data['data'];
+            }
+            else {
+                console.log('请求services错误');
+            }
+            }).error(function (data, status, request) {
+                console.log('请求错误');
+            })
+        },
         data: {
-            'services': [
-                'web',
-                'web02'
-            ]
+            'services': ''
         }
     });
 </script>
