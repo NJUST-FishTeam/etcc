@@ -19,21 +19,16 @@
     <style>
         #head-wrap {
             width: 100%;
-            height: 300px;
+            height: 80px;
             padding-top: 5px;
             background-image: linear-gradient(30deg, rgb(2, 0, 49) 0px, rgb(109, 51, 83) 100%);
             text-align: center;
         }
         .title {
             color: #ffffff;
+            padding-top: 12px;
             font-family: "Helvetica Neue", "microsoft yahei", Helvetica, Arial, "Hiragino Sans GB", "Hiragino Sans GB W3", "WenQuanYi Micro Hei", sans-serif;
-            font-size: 50px;
-        }
-
-        .app-name {
-            color: #ffffff;
-            font-family: "Helvetica Neue", "microsoft yahei", Helvetica, Arial, "Hiragino Sans GB", "Hiragino Sans GB W3", "WenQuanYi Micro Hei", sans-serif;
-            font-size: 75px;
+            font-size: 35px;
         }
 .expand-transition {
   transition: all .5s ease;
@@ -49,8 +44,7 @@
 </head>
 <body>
 <div id="head-wrap">
-<p class="app-name">ETCC</p>
-<p class="title">欢迎来到Fishteam配置中心</p>
+<p class="title">欢迎来到 ETCC</p>
 </div>
 
 <div class="container" style="padding-bottom: 30px">
@@ -89,7 +83,6 @@
         <i @click="delService" class="remove link icon"></i>
         <ul>
             <li v-show="expand" transition="expand" @refresh="fetch" v-for="config in configs" is="config" :service-name="serviceName" :config-name="config.name" :config-json="config.data"></li>
-
         </ul>
         <!-- <input class="form-control form-inline" v-show="expand" type="text" name="name" v-model="newConfigName"> -->
         <!-- <button v-show="expand" @click="newConfig" type="button" name="button">新建配置</button> -->
@@ -119,10 +112,12 @@
                 this.$dispatch('updateCurrent', this.serviceName, this.configName);
             },
             'delConfig': function(){
-                this.$http.delete(this.serviceName + '/configures/' + this.configName
-                ,function(data, status, request){
-                this.$dispatch('refresh');
+                if(confirm("确认以删除!")){
+                    this.$http.delete(this.serviceName + '/configures/' + this.configName
+                    ,function(data, status, request){
+                        this.$dispatch('refresh');
                 })
+            }
             },
             'fetch': function(){
                 this.$http.get(this.serviceName+'/configures/'+this.configName
@@ -149,8 +144,10 @@
         },
         methods: {
             'delService': function(){
-                this.$http.delete(this.serviceName);
-                this.$dispatch('refresh');
+                if(confirm("确认以删除!")){
+                    this.$http.delete(this.serviceName);
+                    this.$dispatch('refresh');
+                }
             },
             'fetch': function(){
                 this.$http.get(this.serviceName + '/configures', function (data, status, request) {
