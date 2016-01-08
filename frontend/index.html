@@ -26,16 +26,16 @@
             font-family: "Helvetica Neue", "microsoft yahei", Helvetica, Arial, "Hiragino Sans GB", "Hiragino Sans GB W3", "WenQuanYi Micro Hei", sans-serif;
             font-size: 35px;
         }
-.expand-transition {
-  transition: all .5s ease;
-  height: 20px;
-}
+        .expand-transition {
+          transition: all .5s ease;
+          height: 20px;
+        }
 
-.expand-enter, .expand-leave {
-  height: 0;
-  padding: 0 10px;
-  opacity: 0;
-}
+        .expand-enter, .expand-leave {
+          height: 0;
+          padding: 0 10px;
+          opacity: 0;
+        }
     </style>
 </head>
 <body>
@@ -57,10 +57,12 @@
         <hr>
         <div class="json-editor col-md-6">
             <p>
-                当前编辑: {{currentService}} \ {{currentConfig}}
+                <button class="ui primary button" @click="updConfig" type="button" name="button">修改</button> 当前编辑: {{currentService}} \ {{currentConfig}}
             </p>
-            <button class="ui primary button" @click="updConfig" type="button" name="button">修改</button>
-            <br><br>
+            <p>
+                http://{{hostname}}/services/{{currentService}}/configures/{{currentConfig}}/
+            <p>
+            
             <div style="height: 250px" id="jsoneditor"></div>
         </div>
     </div>
@@ -233,7 +235,8 @@
             'services': [],
             'newServiceName': '',
             'currentService': '',
-            'currentConfig': ''
+            'currentConfig': '',
+            'hostname': location.host
         }
     });
 </script>
