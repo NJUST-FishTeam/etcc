@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <title>Fishteam 配置中心</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/semantic.min.css">
+    <link href="/static/jsoneditor/jsoneditor.min.css" rel="stylesheet" type="text/css">
+    <script src="static/js/jquery-1.11.3.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/jsoneditor/jsoneditor.min.js"></script>
+    <script src="/static/js/vue.min.js"></script>
+    <script src="/static/js/vue-resource.min.js"></script>
+    <style>
+        #head-wrap {
+            width: 100%;
+            height: 80px;
+            padding-top: 5px;
+            background-image: linear-gradient(30deg, rgb(2, 0, 49) 0px, rgb(109, 51, 83) 100%);
+            text-align: center;
+        }
+        .title {
+            color: #ffffff;
+            padding-top: 12px;
+            font-family: "Helvetica Neue", "microsoft yahei", Helvetica, Arial, "Hiragino Sans GB", "Hiragino Sans GB W3", "WenQuanYi Micro Hei", sans-serif;
+            font-size: 35px;
+        }
+        .expand-transition {
+          transition: all .5s ease;
+          height: 20px;
+        }
+
+        .expand-enter, .expand-leave {
+          height: 0;
+          padding: 0 10px;
+          opacity: 0;
+        }
+    </style>
+</head>
+<body>
+<div id="head-wrap">
+<p class="title">欢迎来到 ETCC</p>
+</div>
+
+<div class="container" style="padding-bottom: 30px">
+    <div id="services" class="row">
+        <div class="col-md-6" style="padding-top: 30px">
+        <ul>
+            <li @refresh="fetch" is="service" v-for="service in services" :service-name="service"></li>
+        </ul>
+        <div style="padding-left:20px;" class="ui mini icon input">
+            <input v-model="newServiceName" type="text" placeholder="New Service Name...">
+            <i  @click="addService"  class="plus link icon"></i>
+        </div>
+        </div>
+        <hr>
+        <div class="json-editor col-md-6">
+            <p>
+                <button class="ui primary button" @click="updConfig" type="button" name="button">修改</button> 当前编辑: {{currentService}} \ {{currentConfig}}
+            </p>
+            <p>
+                http://{{hostname}}/services/{{currentService}}/configures/{{currentConfig}}/
+            <p>
+            
+            <div style="height: 250px" id="jsoneditor"></div>
+        </div>
+    </div>
+
+</div>
+<template id="config">
+    <li>
+        <a href="###" @click="click">{{configName}}</a>
+        <i @click="delConfig" class="remove circle link icon"></i>
+    </li>
+</template>
+<template id="service">
+    <div>
+        <i class="angle link icon" @click="expand=!expand" v-bind:class="menuClass"></i>
+        <label for="">{{serviceName}}</label>
+        <i @click="delService" class="remove link icon"></i>
+        <ul>
+            <li v-show="expand" transition="expand" @refresh="fetch" v-for="config in configs" is="config" :service-name="serviceName" :config-name="config.name" :config-json="config.data"></li>
+        </ul>
+        <!-- <input class="form-control form-inline" v-show="expand" type="text" name="name" v-model="newConfigName"> -->
+        <!-- <button v-show="expand" @click="newConfig" type="button" name="button">新建配置</button> -->
+        <div style="padding-left:20px" class="ui mini icon input">
+            <input v-show="expand" v-model="newConfigName" type="text" placeholder="New Config Name...">
+            <i v-show="expand" @click="newConfig" class="plus link icon"></i>
+        </div>
+    </div>
+</template>
+<script>
+    var json_editor = new JSONEditor(document.getElementById('jsoneditor'),{
+        modes: ['tree', 'code', 'text']
+    });
+    var comConfig = Vue.extend({
+        props: [
+            'configJson',
+            'configName',
+            'serviceName'
+        ],
+        http: {
+            root: '/services'
+        },
+        methods: {
+            'click': function(){
+                console.log(this.configJson);
+                this.fetch();
+                this.$dispatch('updateCurrent', this.serviceName, this.configName);
+            },
+            'delConfig': function(){
+                if(confirm("确认以删除!")){
+                    this.$http.delete(this.serviceName + '/configures/' + this.configName
+                    ,function(data, status, request){
+                        this.$dispatch('refresh');
+                })
+            }
+            },
+            'fetch': function(){
+                this.$http.get(this.serviceName+'/configures/'+this.configName
+                ,function(data, status, request){
+                    if(data.status == 'success'){
+                        this.configJson = data['data'];
+                        json_editor.set(this.configJson);
+                    }
+                });
+            }
+        },
+        template: '#config'
+    });
+    var comService = Vue.extend({
+        props: [
+            'serviceName'
+        ],
+        http: {
+            root: '/services'
+        },
+        template: '#service',
+        components: {
+            'config': comConfig
+        },
+        methods: {
+            'delService': function(){
+                if(confirm("确认以删除!")){
+                    this.$http.delete(this.serviceName);
+                    this.$dispatch('refresh');
+                }
+            },
+            'fetch': function(){
+                this.$http.get(this.serviceName + '/configures', function (data, status, request) {
+                if(data['status'] == 'success'){
+                    this.configs = data['data'];
+                }
+                else {
+                    console.log('请求configs错误');
+                }
+                }).error(function (data, status, request) {
+                    console.log('请求错误');
+                })
+            },
+            'newConfig': function(){
+                this.$http.post(this.serviceName+'/configures', {
+                    "action": "create_configure",
+                    "configure_name": this.newConfigName,
+                    "configure": {}
+                }, function(data, status, request){
+                    //
+                });
+                this.fetch();
+                this.newConfigName = "";
+            }
+        },
+        ready: function(){
+            this.fetch();
+        },
+        data: function(){
+            return {
+                'configs': [],
+                'newConfigName': '',
+                'expand': false
+            };
+        },
+        computed: {
+            'menuClass': function(){
+                return this.expand ? 'down' : 'right';
+            }
+        },
+    });
+    var vmServices = new Vue({
+        http: {
+            root: '/services',
+        },
+        el: '#services',
+        components: {
+            'service': comService
+        },
+        methods: {
+            'fetch': function(){
+                this.$http.get('', function (data, status, request) {
+                if(data['status'] == 'success'){
+                    this.services = data['data'];
+                }
+                else {
+                    console.log('请求services错误');
+                }
+                }).error(function (data, status, request) {
+                    console.log('请求错误');
+                })
+            },
+            'addService': function(){
+                this.$http.post('', {"action": "create_service",
+                "service": this.newServiceName});
+                this.newServiceName = '';
+                this.fetch();
+            },
+            'updConfig': function(){
+                console.log(json_editor.get());
+                this.$http.put(this.currentService+'/configures/'+this.currentConfig
+            , json_editor.get(), function(data, status, requests){
+                //
+            });
+            }
+        },
+        events: {
+            'updateCurrent': function(service, config){
+                this.currentService = service;
+                this.currentConfig = config;
+            }
+        },
+        ready: function(){
+            this.fetch();
+        },
+        data: {
+            'services': [],
+            'newServiceName': '',
+            'currentService': '',
+            'currentConfig': '',
+            'hostname': location.host
+        }
+    });
+</script>
+</body>
+</html>

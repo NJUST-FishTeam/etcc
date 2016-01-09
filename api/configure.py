@@ -20,7 +20,7 @@ class Collection(object):
             raise falcon.HTTPNotFound
         files = os.listdir(service_path)
         configs = [f.split('.')[0] for f in files
-                   if os.path.isfile(os.path.join(service_path, f))]
+                   if os.path.isfile(os.path.join(service_path, f)) and f.endswith('.json')]
 
         data = []
         for conf in configs:
