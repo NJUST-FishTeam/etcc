@@ -19,4 +19,3 @@ api.add_route('/', tinywebserver.DefaultPage())
 
 static_file_handler = tinywebserver.StaticFiles()
 api.add_sink(static_file_handler.on_get, '/static/')
-# api.add_route('/static/{filepath}',tinywebserver.StaticFiles())

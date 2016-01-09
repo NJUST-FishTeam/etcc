@@ -7,5 +7,3 @@ STORE_PATH = os.path.join(os.getcwd(), 'config')
 
 # you can use absolute path for configure store
 # STORE_PATH = ''
-
-print 'STORE_PATH = ', STORE_PATH
